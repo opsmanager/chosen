@@ -1,4 +1,4 @@
-class AbstractChosen
+window.AbstractChosen = class AbstractChosen
 
   constructor: (@form_field, @options={}) ->
     return unless AbstractChosen.browser_is_supported()
@@ -129,11 +129,22 @@ class AbstractChosen
 
     results = 0
 
+    specialCharsRegExp = /[-[\]{}()*+?.,\\^$|#\s]/g
+
     searchText = this.get_search_text()
-    escapedSearchText = searchText.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&")
+    searchRegExpParts = []
+    substitutions = @options.substitutions or {}
+    emptyStringAccepted = substitutions["emptyStringAccepted"] || false
+    for ch in searchText
+      sub = substitutions[ch] or ch
+      searchRegExpPart = "[" + sub.replace(specialCharsRegExp, "\\$&") + "]"
+      searchRegExpPart += "?" if emptyStringAccepted and sub == substitutions[ch]
+      searchRegExpParts.push(searchRegExpPart)
+    searchRegExpText = searchRegExpParts.join('')
+
     regexAnchor = if @search_contains then "" else "^"
-    regex = new RegExp(regexAnchor + escapedSearchText, 'i')
-    zregex = new RegExp(escapedSearchText, 'i')
+    regex = new RegExp(regexAnchor + searchRegExpText, 'i')
+    zregex = new RegExp(searchRegExpText, 'i')
 
     for option in @results_data
 
